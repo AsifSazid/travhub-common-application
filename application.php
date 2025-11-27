@@ -1200,11 +1200,14 @@ if ($pnr) {
                 case 12: // U.S. Contact Information Step (Based on Excel USCI section)
                     return generateUSContactStep(applicant);
 
-                case 7: // Travel Information
-                    return generateTravelInfoStep(applicant);
+                case 13: // Work Information Step (Based on Excel WI section)
+                    return generateWorkInfoStepForUSA(applicant);
 
-                case 8: // Travel History
-                    return generateTravelHistoryStep(applicant);
+                case 14: // Educational Information Step (Based on Excel EDI section)
+                    return generateEducationInfoStepForUSA(applicant);
+
+                case 15: // Other Information Step (Based on Excel OI section)
+                    return generateOtherInfoStepForUSA(applicant);
 
                 default:
                     return '<p>Step content not defined.</p>';
@@ -3715,11 +3718,985 @@ if ($pnr) {
             }
         }
 
+        // Work Information Step (Based on Excel WI section)
+        function generateWorkInfoStepForUSA(applicant) {
+            const wi = applicant.workInfoForUSA || {};
+            const previousEmployment = wi.previousEmployment || [];
 
+            return `
+                <div class="space-y-6">
+                    <!-- Primary Occupation Type -->
+                    <div>
+                        <label class="block text-gray-700 mb-2">Primary Occupation Type *</label>
+                        <select name="wi_primary_occupation_type" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                onchange="handleOccupationChange(this.value); updateApplicantDataForUSA('workInfoForUSA', 'wi_primary_occupation_type', this.value)" required>
+                            <option value="">Select Category</option>
+                            <option value="Student" ${(wi.wi_primary_occupation_type === 'Student') ? 'selected' : ''}>Student</option>
+                            <option value="Homemaker" ${(wi.wi_primary_occupation_type === 'Homemaker') ? 'selected' : ''}>Homemaker</option>
+                            <option value="Retired" ${(wi.wi_primary_occupation_type === 'Retired') ? 'selected' : ''}>Retired</option>
+                            <option value="Government" ${(wi.wi_primary_occupation_type === 'Government') ? 'selected' : ''}>Government</option>
+                            <option value="Private Sector" ${(wi.wi_primary_occupation_type === 'Private Sector') ? 'selected' : ''}>Private Sector</option>
+                            <option value="Military" ${(wi.wi_primary_occupation_type === 'Military') ? 'selected' : ''}>Military</option>
+                            <option value="Unemployed" ${(wi.wi_primary_occupation_type === 'Unemployed') ? 'selected' : ''}>Unemployed</option>
+                            <option value="Other" ${(wi.wi_primary_occupation_type === 'Other') ? 'selected' : ''}>Other</option>
+                        </select>
+                    </div>
 
+                    <!-- Employment Fields (Conditional) -->
+                    <div id="employment-fields" style="display: ${isEmploymentType(wi.wi_primary_occupation_type) ? 'block' : 'none'};">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-gray-700 mb-2">Present Company Name *</label>
+                                <input type="text" name="wi_company_or_school_name" 
+                                    value="${wi.wi_company_or_school_name || ''}" 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    onchange="updateApplicantDataForUSA('workInfoForUSA', 'wi_company_or_school_name', this.value)">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-2">Monthly Salary</label>
+                                <input type="text" name="wi_salary" 
+                                    value="${wi.wi_salary || ''}" 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    onchange="updateApplicantDataForUSA('workInfoForUSA', 'wi_salary', this.value)"
+                                    placeholder="Enter monthly salary">
+                            </div>
+                        </div>
 
+                        <!-- Description of Duties -->
+                        <div class="mt-4">
+                            <label class="block text-gray-700 mb-2">Describe Your Duties</label>
+                            <textarea name="wi_your_duties" 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    rows="4"
+                                    placeholder="Describe your duties..."
+                                    onchange="updateApplicantDataForUSA('workInfoForUSA', 'wi_your_duties', this.value)">${wi.wi_your_duties || ''}</textarea>
+                        </div>
 
+                        <!-- Company Address -->
+                        <div class="border-t pt-6">
+                            <h4 class="text-lg font-medium text-gray-800 mb-4">Present Company Address</h4>
+                            <div class="grid grid-cols-1 gap-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-gray-700 mb-2">Present Company Address Line 1</label>
+                                        <input type="text" name="wi_company_or_school_address_line_1" 
+                                            value="${wi.wi_company_or_school_address_line_1 || ''}" 
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            onchange="updateApplicantDataForUSA('workInfoForUSA', 'wi_company_or_school_address_line_1', this.value)">
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 mb-2">Present Company Address Line 2</label>
+                                        <input type="text" name="wi_company_or_school_address_line_2" 
+                                            value="${wi.wi_company_or_school_address_line_2 || ''}" 
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            onchange="updateApplicantDataForUSA('workInfoForUSA', 'wi_company_or_school_address_line_2', this.value)">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-gray-700 mb-2">Present Company Address City</label>
+                                        <input type="text" name="wi_company_or_school_address_city" 
+                                            value="${wi.wi_company_or_school_address_city || ''}" 
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            onchange="updateApplicantDataForUSA('workInfoForUSA', 'wi_company_or_school_address_city', this.value)">
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 mb-2">Present Company Address State</label>
+                                        <input type="text" name="wi_company_or_school_address_state" 
+                                            value="${wi.wi_company_or_school_address_state || ''}" 
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            onchange="updateApplicantDataForUSA('workInfoForUSA', 'wi_company_or_school_address_state', this.value)">
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 mb-2">Present Company Address Zip Code</label>
+                                        <input type="text" name="wi_company_or_school_address_zip_code" 
+                                            value="${wi.wi_company_or_school_address_zip_code || ''}" 
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            onchange="updateApplicantDataForUSA('workInfoForUSA', 'wi_company_or_school_address_zip_code', this.value)">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-gray-700 mb-2">Present Company Address Country</label>
+                                        <select name="wi_company_or_school_address_country" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                                onchange="updateApplicantDataForUSA('workInfoForUSA', 'wi_company_or_school_address_country', this.value)">
+                                            <option value="">Select Country</option>
+                                            ${countries.map(country => 
+                                                `<option value="${country.code}" ${(wi.wi_company_or_school_address_country === country.code) ? 'selected' : ''}>${country.name}</option>`
+                                            ).join('')}
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 mb-2">Present Company Address Telephone</label>
+                                        <input type="tel" name="wi_company_or_school_address_telephone" 
+                                            value="${wi.wi_company_or_school_address_telephone || ''}" 
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            onchange="updateApplicantDataForUSA('workInfoForUSA', 'wi_company_or_school_address_telephone', this.value)">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
+                    <!-- Student Fields (Conditional) -->
+                    <div id="student-fields" style="display: ${wi.wi_primary_occupation_type === 'Student' ? 'block' : 'none'};">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-gray-700 mb-2">School/University Name *</label>
+                                <input type="text" name="wi_company_or_school_name" 
+                                    value="${wi.wi_company_or_school_name || ''}" 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    onchange="updateApplicantDataForUSA('workInfoForUSA', 'wi_company_or_school_name', this.value)">
+                            </div>
+                        </div>
+
+                        <!-- School Address -->
+                        <div class="border-t pt-6">
+                            <h4 class="text-lg font-medium text-gray-800 mb-4">School/University Address</h4>
+                            <div class="grid grid-cols-1 gap-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-gray-700 mb-2">School Address Line 1</label>
+                                        <input type="text" name="wi_company_or_school_address_line_1" 
+                                            value="${wi.wi_company_or_school_address_line_1 || ''}" 
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            onchange="updateApplicantDataForUSA('workInfoForUSA', 'wi_company_or_school_address_line_1', this.value)">
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 mb-2">School Address Line 2</label>
+                                        <input type="text" name="wi_company_or_school_address_line_2" 
+                                            value="${wi.wi_company_or_school_address_line_2 || ''}" 
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            onchange="updateApplicantDataForUSA('workInfoForUSA', 'wi_company_or_school_address_line_2', this.value)">
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-gray-700 mb-2">School Address City</label>
+                                        <input type="text" name="wi_company_or_school_address_city" 
+                                            value="${wi.wi_company_or_school_address_city || ''}" 
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            onchange="updateApplicantDataForUSA('workInfoForUSA', 'wi_company_or_school_address_city', this.value)">
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 mb-2">School Address State</label>
+                                        <input type="text" name="wi_company_or_school_address_state" 
+                                            value="${wi.wi_company_or_school_address_state || ''}" 
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            onchange="updateApplicantDataForUSA('workInfoForUSA', 'wi_company_or_school_address_state', this.value)">
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-700 mb-2">School Address Zip Code</label>
+                                        <input type="text" name="wi_company_or_school_address_zip_code" 
+                                            value="${wi.wi_company_or_school_address_zip_code || ''}" 
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            onchange="updateApplicantDataForUSA('workInfoForUSA', 'wi_company_or_school_address_zip_code', this.value)">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Previous Employment Toggle -->
+                    <div id="previous-employment-toggle" style="display: ${isEmploymentType(wi.wi_primary_occupation_type) ? 'block' : 'none'};">
+                        <label class="block text-gray-700 mb-2">Were you previously employed?</label>
+                        <div class="flex space-x-4">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="have_previous_experience" value="1" 
+                                    ${wi.have_previous_experience ? 'checked' : ''}
+                                    onchange="toggleConditionalBlock('previous-employment', true); updateApplicantDataForUSA('workInfoForUSA', 'have_previous_experience', true)">
+                                <span class="ml-2">Yes</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="have_previous_experience" value="0" 
+                                    ${!wi.have_previous_experience ? 'checked' : ''}
+                                    onchange="toggleConditionalBlock('previous-employment', false); updateApplicantDataForUSA('workInfoForUSA', 'have_previous_experience', false)">
+                                <span class="ml-2">No</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Previous Employment Section -->
+                    <div id="previous-employment" class="conditional-block" style="display: ${(wi.have_previous_experience && isEmploymentType(wi.wi_primary_occupation_type)) ? 'block' : 'none'};">
+                        <div class="space-y-6">
+                            <h4 class="text-lg font-medium text-gray-800">Previous Employment History</h4>
+                            <div id="previous-employment-fields">
+                                ${generatePreviousEmploymentFields(previousEmployment)}
+                            </div>
+                            <button type="button" onclick="addPreviousEmploymentField()" class="mt-2 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg flex items-center">
+                                <i class="fas fa-plus mr-2"></i> Add Previous Employment
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Helper Functions
+        function isEmploymentType(occupation) {
+            return ['Government', 'Private Sector', 'Military'].includes(occupation);
+        }
+
+        function handleOccupationChange(value) {
+            const isEmployment = isEmploymentType(value);
+            const isStudent = value === 'Student';
+
+            toggleConditionalBlock('employment-fields', isEmployment);
+            toggleConditionalBlock('student-fields', isStudent);
+            toggleConditionalBlock('previous-employment-toggle', isEmployment);
+
+            // Hide previous employment if not employment type
+            if (!isEmployment) {
+                toggleConditionalBlock('previous-employment', false);
+            }
+        }
+
+        function generatePreviousEmploymentFields(previousEmployment) {
+            if (!previousEmployment || previousEmployment.length === 0) {
+                previousEmployment = [{}];
+            }
+
+            return previousEmployment.map((employment, index) => `
+                <div class="previous-employment-field border border-gray-300 rounded-lg p-6 mb-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-700 mb-2">Previous Company Name</label>
+                            <input type="text" name="wi_pre_company_name" 
+                                value="${employment.wi_pre_company_name || ''}" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                onchange="updatePreviousEmploymentArray('workInfoForUSA', 'previousEmployment', ${index}, 'wi_pre_company_name', this.value)">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">Previous Company Job Title</label>
+                            <input type="text" name="wi_pre_company_job_title" 
+                                value="${employment.wi_pre_company_job_title || ''}" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                onchange="updatePreviousEmploymentArray('workInfoForUSA', 'previousEmployment', ${index}, 'wi_pre_company_job_title', this.value)">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">Previous Company Supervisor Surname</label>
+                            <input type="text" name="wi_pre_company_supervisor_surname" 
+                                value="${employment.wi_pre_company_supervisor_surname || ''}" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                onchange="updatePreviousEmploymentArray('workInfoForUSA', 'previousEmployment', ${index}, 'wi_pre_company_supervisor_surname', this.value)">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">Previous Company Supervisor Given Name</label>
+                            <input type="text" name="wi_pre_company_supervisor_given_name" 
+                                value="${employment.wi_pre_company_supervisor_given_name || ''}" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                onchange="updatePreviousEmploymentArray('workInfoForUSA', 'previousEmployment', ${index}, 'wi_pre_company_supervisor_given_name', this.value)">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">Employment Date Started From</label>
+                            <input type="date" name="wi_pre_employment_started" 
+                                value="${employment.wi_pre_employment_started || ''}" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                onchange="updatePreviousEmploymentArray('workInfoForUSA', 'previousEmployment', ${index}, 'wi_pre_employment_started', this.value)">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">Employment Date Ended To</label>
+                            <input type="date" name="wi_pre_employment_ended" 
+                                value="${employment.wi_pre_employment_ended || ''}" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                onchange="updatePreviousEmploymentArray('workInfoForUSA', 'previousEmployment', ${index}, 'wi_pre_employment_ended', this.value)">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">Previous Company Monthly Salary</label>
+                            <input type="text" name="wi_pre_company_salary" 
+                                value="${employment.wi_pre_company_salary || ''}" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                onchange="updatePreviousEmploymentArray('workInfoForUSA', 'previousEmployment', ${index}, 'wi_pre_company_salary', this.value)">
+                        </div>
+                    </div>
+
+                    <!-- Previous Company Address -->
+                    <div class="border-t pt-4 mt-4">
+                        <h5 class="text-md font-medium text-gray-700 mb-3">Previous Company Address</h5>
+                        <div class="grid grid-cols-1 gap-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Previous Company Address Line 1</label>
+                                    <input type="text" name="wi_pre_company_address_line_1" 
+                                        value="${employment.wi_pre_company_address_line_1 || ''}" 
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        onchange="updatePreviousEmploymentArray('workInfoForUSA', 'previousEmployment', ${index}, 'wi_pre_company_address_line_1', this.value)">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Previous Company Address Line 2</label>
+                                    <input type="text" name="wi_pre_company_address_line_2" 
+                                        value="${employment.wi_pre_company_address_line_2 || ''}" 
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        onchange="updatePreviousEmploymentArray('workInfoForUSA', 'previousEmployment', ${index}, 'wi_pre_company_address_line_2', this.value)">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Previous Company Address City</label>
+                                    <input type="text" name="wi_pre_company_address_city" 
+                                        value="${employment.wi_pre_company_address_city || ''}" 
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        onchange="updatePreviousEmploymentArray('workInfoForUSA', 'previousEmployment', ${index}, 'wi_pre_company_address_city', this.value)">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Previous Company Address State</label>
+                                    <input type="text" name="wi_pre_company_address_state" 
+                                        value="${employment.wi_pre_company_address_state || ''}" 
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        onchange="updatePreviousEmploymentArray('workInfoForUSA', 'previousEmployment', ${index}, 'wi_pre_company_address_state', this.value)">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Previous Company Address Zip Code</label>
+                                    <input type="text" name="wi_pre_company_address_zip_code" 
+                                        value="${employment.wi_pre_company_address_zip_code || ''}" 
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        onchange="updatePreviousEmploymentArray('workInfoForUSA', 'previousEmployment', ${index}, 'wi_pre_company_address_zip_code', this.value)">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Previous Company Address Country</label>
+                                    <select name="wi_pre_company_address_country" 
+                                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                            onchange="updatePreviousEmploymentArray('workInfoForUSA', 'previousEmployment', ${index}, 'wi_pre_company_address_country', this.value)">
+                                        <option value="">Select Country</option>
+                                        ${countries.map(country => 
+                                            `<option value="${country.code}" ${(employment.wi_pre_company_address_country === country.code) ? 'selected' : ''}>${country.name}</option>`
+                                        ).join('')}
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-gray-700 mb-2">Previous Company Address Telephone</label>
+                                    <input type="tel" name="wi_pre_company_address_telephone" 
+                                        value="${employment.wi_pre_company_address_telephone || ''}" 
+                                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                        onchange="updatePreviousEmploymentArray('workInfoForUSA', 'previousEmployment', ${index}, 'wi_pre_company_address_telephone', this.value)">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Previous Company Duties -->
+                    <div class="mt-4">
+                        <label class="block text-gray-700 mb-2">Previous Company Describe Your Duties</label>
+                        <textarea name="wi_pre_company_duties" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                rows="3"
+                                placeholder="Describe your duties at this company..."
+                                onchange="updatePreviousEmploymentArray('workInfoForUSA', 'previousEmployment', ${index}, 'wi_pre_company_duties', this.value)">${employment.wi_pre_company_duties || ''}</textarea>
+                    </div>
+
+                    ${index > 0 ? `
+                        <div class="mt-4">
+                            <button type="button" onclick="removePreviousEmploymentField(${index})" class="bg-red-500 hover:bg-red-600 text-white py-2 px-4 rounded-lg flex items-center">
+                                <i class="fas fa-times mr-2"></i> Remove Employment
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+        }
+
+        // Keep the same add/remove functions as before
+        function addPreviousEmploymentField() {
+            const applicant = state.applicants[state.currentApplicant];
+            if (!applicant.workInfoForUSA.previousEmployment) { // workInfo -> workInfoForUSA
+                applicant.workInfoForUSA.previousEmployment = [];
+            }
+            const container = document.getElementById('previous-employment-fields');
+            const index = container.children.length;
+
+            if (!state.applicants[state.currentApplicant].workInfoForUSA.previousEmployment) {
+                state.applicants[state.currentApplicant].workInfoForUSA.previousEmployment = [];
+            }
+            state.applicants[state.currentApplicant].workInfoForUSA.previousEmployment.push({});
+            saveToLocalStorage();
+
+            const previousEmployment = state.applicants[state.currentApplicant].workInfoForUSA.previousEmployment;
+            container.innerHTML = generatePreviousEmploymentFields(previousEmployment);
+        }
+
+        function removePreviousEmploymentField(index) {
+            const field = document.querySelector(`.previous-employment-field:nth-child(${index + 1})`);
+            if (field) {
+                state.applicants[state.currentApplicant].workInfoForUSA.previousEmployment.splice(index, 1);
+                saveToLocalStorage();
+
+                const container = document.getElementById('previous-employment-fields');
+                const previousEmployment = state.applicants[state.currentApplicant].workInfoForUSA.previousEmployment;
+                container.innerHTML = generatePreviousEmploymentFields(previousEmployment);
+            }
+        }
+
+        function updatePreviousEmploymentArray(scope, arrayName, index, fieldName, value) {
+            if (!state.applicants[state.currentApplicant][scope][arrayName]) {
+                state.applicants[state.currentApplicant][scope][arrayName] = [];
+            }
+            if (!state.applicants[state.currentApplicant][scope][arrayName][index]) {
+                state.applicants[state.currentApplicant][scope][arrayName][index] = {};
+            }
+            state.applicants[state.currentApplicant][scope][arrayName][index][fieldName] = value;
+            saveToLocalStorage();
+        }
+
+        // Educational Information Step (Based on Excel EDI section)
+        function generateEducationInfoStepForUSA(applicant) {
+            const edi = applicant.educationalInfo || {};
+            const institutions = edi.institutions || [];
+
+            return `
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-gray-700 mb-2">Have you attended any educational institution at a secondary level or above?</label>
+                        <div class="flex space-x-4">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="edi_have_attended_secondary_level" value="1" 
+                                       ${edi.edi_have_attended_secondary_level ? 'checked' : ''}
+                                       onchange="toggleConditionalBlock('education-history', this.checked); updateApplicantDataForUSA('educationalInfo', 'edi_have_attended_secondary_level', this.checked)">
+                                <span class="ml-2">Yes</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="edi_have_attended_secondary_level" value="0" 
+                                       ${!edi.edi_have_attended_secondary_level ? 'checked' : ''}
+                                       onchange="toggleConditionalBlock('education-history', this.checked); updateApplicantDataForUSA('educationalInfo', 'edi_have_attended_secondary_level', this.checked)">
+                                <span class="ml-2">No</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="education-history" class="conditional-block ${edi.edi_have_attended_secondary_level ? 'active' : ''}">
+                        <div class="space-y-6">
+                            <h4 class="text-lg font-medium text-gray-800">Educational Institutions</h4>
+                            <div id="institution-fields">
+                                ${generateInstitutionFields(institutions)}
+                            </div>
+                            <button type="button" onclick="addInstitutionField()" class="mt-2 bg-blue-500 hover:bg-blue-600 text-white py-2 px-4 rounded-lg flex items-center">
+                                <i class="fas fa-plus mr-2"></i> Add Institution
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateInstitutionFields(institutions) {
+            return institutions.map((institution, index) => `
+                <div class="dynamic-field-group">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="font-medium text-gray-700">Institution ${index + 1}</h4>
+                        ${index > 0 ? `
+                        <button type="button" class="bg-red-500 hover:bg-red-600 text-white py-1 px-3 rounded-lg text-sm" onclick="removeInstitutionField(${index})">
+                            Remove Institution
+                        </button>
+                        ` : ''}
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-700 mb-2">Institution Name</label>
+                            <input type="text" 
+                                   value="${institution.name || ''}" 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   onchange="updateInstitutionData(${index}, 'name', this.value)">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">Course of Study</label>
+                            <input type="text" 
+                                   value="${institution.course || ''}" 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   onchange="updateInstitutionData(${index}, 'course', this.value)">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">Attendance From</label>
+                            <input type="date" 
+                                   value="${institution.attendanceFrom || ''}" 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   onchange="updateInstitutionData(${index}, 'attendanceFrom', this.value)">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">Attendance To</label>
+                            <input type="date" 
+                                   value="${institution.attendanceTo || ''}" 
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   onchange="updateInstitutionData(${index}, 'attendanceTo', this.value)">
+                        </div>
+                        <div>
+                            <div>
+                                <label class="block text-gray-700 mb-2">School Address Line 1</label>
+                                <input type="text" name="edi_institution_address_line_1" 
+                                    value="${institution.edi_institution_address_line_1 || ''}" 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    onchange="updateApplicantDataForUSA('workInfoForUSA', 'edi_institution_address_line_1', this.value)">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-2">School Address Line 2</label>
+                                <input type="text" name="edi_institution_address_line_2" 
+                                    value="${institution.edi_institution_address_line_2 || ''}" 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    onchange="updateApplicantDataForUSA('workInfoForUSA', 'edi_institution_address_line_2', this.value)">
+                            </div>
+                        </div>
+                        <div>
+                            <div>
+                                <label class="block text-gray-700 mb-2">School Address City</label>
+                                <input type="text" name="edi_institution_address_city" 
+                                    value="${institution.edi_institution_address_city || ''}" 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    onchange="updateApplicantDataForUSA('workInfoForUSA', 'edi_institution_address_city', this.value)">
+                            </div>
+                            <div>
+                                <label class="block text-gray-700 mb-2">School Address State</label>
+                                <input type="text" name="edi_institution_address_state" 
+                                    value="${institution.edi_institution_address_state || ''}" 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    onchange="updateApplicantDataForUSA('workInfoForUSA', 'edi_institution_address_state', this.value)">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">School Address Zip Code</label>
+                            <input type="text" name="edi_institution_address_zip_code" 
+                                value="${institution.edi_institution_address_zip_code || ''}" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                onchange="updateApplicantDataForUSA('workInfoForUSA', 'edi_institution_address_zip_code', this.value)">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">School Address Country</label>
+                            <select name="edi_institution_address_country" 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    onchange="updatePreviousEmploymentArray('workInfoForUSA', 'previousEmployment', ${index}, 'edi_institution_address_country', this.value)">
+                                <option value="">Select Country</option>
+                                ${countries.map(country => 
+                                    `<option value="${country.code}" ${(institution.edi_institution_address_country === country.code) ? 'selected' : ''}>${country.name}</option>`
+                                ).join('')}
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function addInstitutionField() {
+            const applicant = state.applicants[state.currentApplicant];
+            if (!applicant.educationalInfo.institutions) {
+                applicant.educationalInfo.institutions = [];
+            }
+            applicant.educationalInfo.institutions.push({
+                name: '',
+                course: '',
+                attendanceFrom: '',
+                attendanceTo: ''
+            });
+            generateFormSteps();
+            saveToLocalStorage();
+        }
+
+        // Other Information Step (Based on Excel OI section)
+        function generateOtherInfoStepForUSA(applicant) {
+            const oi = applicant.otherInfo || {};
+
+            return `
+                <div class="space-y-6">
+                    <div>
+                        <label class="block text-gray-700 mb-2">List of Languages Spoken</label>
+                        <textarea name="oi_spoken_language_list" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                rows="3"
+                                onchange="updateApplicantDataForUSA('otherInfo', 'oi_spoken_language_list', this.value)">${oi.oi_spoken_language_list || ''}</textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-700 mb-2">Have you traveled to any countries in the last five years?</label>
+                        <div class="flex space-x-4">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="oi_have_travel_country_5years" value="true" 
+                                    ${oi.oi_have_travel_country_5years ? 'checked' : ''}
+                                    onchange="toggleConditionalBlock('traveled-countries', true); updateApplicantDataForUSA('otherInfo', 'oi_have_travel_country_5years', this.value === 'true')">
+                                <span class="ml-2">Yes</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="oi_have_travel_country_5years" value="false" 
+                                    ${!oi.oi_have_travel_country_5years ? 'checked' : ''}
+                                    onchange="toggleConditionalBlock('traveled-countries', false); updateApplicantDataForUSA('otherInfo', 'oi_have_travel_country_5years', this.value === 'true')">
+                                <span class="ml-2">No</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="traveled-countries" class="conditional-block" style="display: ${oi.oi_have_travel_country_5years ? 'block' : 'none'}">
+                        <div>
+                            <label class="block text-gray-700 mb-2">Traveled Countries</label>
+                            <div id="travelled-countries-container">
+                                ${generateTravelledCountryFields(oi.oi_travelled_country || [])}
+                            </div>
+                            <button type="button" 
+                                    class="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                                    onclick="addTravelledCountryField()">
+                                Add Another Country
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-700 mb-2">Have you belonged to any professional, social, or charitable organizations?</label>
+                        <div class="flex space-x-4">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="oi_have_you_belong_orgntion" value="true" 
+                                    ${oi.oi_have_you_belong_orgntion ? 'checked' : ''}
+                                    onchange="toggleConditionalBlock('organization-info', true); updateApplicantDataForUSA('otherInfo', 'oi_have_you_belong_orgntion', this.value === 'true')">
+                                <span class="ml-2">Yes</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="oi_have_you_belong_orgntion" value="false" 
+                                    ${!oi.oi_have_you_belong_orgntion ? 'checked' : ''}
+                                    onchange="toggleConditionalBlock('organization-info', false); updateApplicantDataForUSA('otherInfo', 'oi_have_you_belong_orgntion', this.value === 'true')">
+                                <span class="ml-2">No</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="organization-info" class="conditional-block" style="display: ${oi.oi_have_you_belong_orgntion ? 'block' : 'none'}">
+                        <div>
+                            <label class="block text-gray-700 mb-2">Organization Name*</label>
+                            <div id="organizations-container">
+                                ${generateOrganizationFields(oi.oi_organization_name || [])}
+                            </div>
+                            <button type="button" 
+                                    class="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                                    onclick="addOrganizationField()">
+                                Add Another Organization
+                            </button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-700 mb-2">Do you have any special skills or training in fire arms, explosives, or nuclear materials?</label>
+                        <div class="flex space-x-4">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="oi_have_special_skills" value="true" 
+                                    ${oi.oi_have_special_skills ? 'checked' : ''}
+                                    onchange="toggleConditionalBlock('special-skills-info', true); updateApplicantDataForUSA('otherInfo', 'oi_have_special_skills', this.value === 'true')">
+                                <span class="ml-2">Yes</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="oi_have_special_skills" value="false" 
+                                    ${!oi.oi_have_special_skills ? 'checked' : ''}
+                                    onchange="toggleConditionalBlock('special-skills-info', false); updateApplicantDataForUSA('otherInfo', 'oi_have_special_skills', this.value === 'true')">
+                                <span class="ml-2">No</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="special-skills-info" class="conditional-block" style="display: ${oi.oi_have_special_skills ? 'block' : 'none'}">
+                        <div>
+                            <label class="block text-gray-700 mb-2">Explain your special skills or training</label>
+                            <textarea name="oi_special_skills" 
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    rows="4"
+                                    onchange="updateApplicantDataForUSA('otherInfo', 'oi_special_skills', this.value)">${oi.oi_special_skills || ''}</textarea>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-700 mb-2">Have you ever served in the military?</label>
+                        <div class="flex space-x-4">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="oi_have_served_military" value="true" 
+                                    ${oi.oi_have_served_military ? 'checked' : ''}
+                                    onchange="toggleConditionalBlock('military-service-history', true); updateApplicantDataForUSA('otherInfo', 'oi_have_served_military', this.value === 'true')">
+                                <span class="ml-2">Yes</span>
+                            </label>
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="oi_have_served_military" value="false" 
+                                    ${!oi.oi_have_served_military ? 'checked' : ''}
+                                    onchange="toggleConditionalBlock('military-service-history', false); updateApplicantDataForUSA('otherInfo', 'oi_have_served_military', this.value === 'true')">
+                                <span class="ml-2">No</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="military-service-history" class="conditional-block" style="display: ${oi.oi_have_served_military ? 'block' : 'none'}">
+                        <div>
+                            <label class="block text-gray-700 mb-2">Military Service History</label>
+                            <div id="military-service-container">
+                                ${generateMilitaryServiceFields(oi.oi_military_service || [])}
+                            </div>
+                            <button type="button" 
+                                    class="mt-2 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+                                    onclick="addMilitaryServiceField()">
+                                Add Another Service Period
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Keep all your existing helper functions as they are
+        function updateTravelledCountryArray(scope, arrayName, index, fieldName, value) {
+            if (!state.applicants[state.currentApplicant][scope]) {
+                state.applicants[state.currentApplicant][scope] = {};
+            }
+            if (!state.applicants[state.currentApplicant][scope][arrayName]) {
+                state.applicants[state.currentApplicant][scope][arrayName] = [];
+            }
+
+            // For travelled countries, we're storing just the country code as string
+            state.applicants[state.currentApplicant][scope][arrayName][index] = value;
+            saveToLocalStorage();
+        }
+
+        function addTravelledCountryField() {
+            if (!state.applicants[state.currentApplicant].otherInfo) {
+                state.applicants[state.currentApplicant].otherInfo = {};
+            }
+            if (!state.applicants[state.currentApplicant].otherInfo.oi_travelled_country) {
+                state.applicants[state.currentApplicant].otherInfo.oi_travelled_country = [];
+            }
+
+            state.applicants[state.currentApplicant].otherInfo.oi_travelled_country.push('');
+
+            const container = document.getElementById('travelled-countries-container');
+            if (container) {
+                container.innerHTML = generateTravelledCountryFields(state.applicants[state.currentApplicant].otherInfo.oi_travelled_country);
+            }
+
+            saveToLocalStorage();
+        }
+
+        function removeTravelledCountryField(index) {
+            if (state.applicants[state.currentApplicant].otherInfo &&
+                state.applicants[state.currentApplicant].otherInfo.oi_travelled_country) {
+                state.applicants[state.currentApplicant].otherInfo.oi_travelled_country.splice(index, 1);
+
+                const container = document.getElementById('travelled-countries-container');
+                if (container) {
+                    container.innerHTML = generateTravelledCountryFields(state.applicants[state.currentApplicant].otherInfo.oi_travelled_country);
+                }
+
+                saveToLocalStorage();
+            }
+        }
+
+        function generateTravelledCountryFields(selectedCountries) {
+            if (!selectedCountries || !Array.isArray(selectedCountries)) {
+                selectedCountries = [''];
+            }
+
+            return selectedCountries.map((countryCode, index) => `
+                <div class="flex items-center space-x-2 mb-2">
+                    <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            onchange="updateTravelledCountryArray('otherInfo', 'oi_travelled_country', ${index}, 'country', this.value)">
+                        <option value="">Select Country</option>
+                        ${countries.map(country => `
+                            <option value="${country.code}" ${countryCode === country.code ? 'selected' : ''}>${country.name}</option>
+                        `).join('')}
+                    </select>
+                    <button type="button" 
+                            class="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                            onclick="removeTravelledCountryField(${index})">
+                        Remove
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function updateOrganizationArray(scope, arrayName, index, fieldName, value) {
+            if (!state.applicants[state.currentApplicant][scope]) {
+                state.applicants[state.currentApplicant][scope] = {};
+            }
+            if (!state.applicants[state.currentApplicant][scope][arrayName]) {
+                state.applicants[state.currentApplicant][scope][arrayName] = [];
+            }
+
+            if (!state.applicants[state.currentApplicant][scope][arrayName][index]) {
+                state.applicants[state.currentApplicant][scope][arrayName][index] = {};
+            }
+            state.applicants[state.currentApplicant][scope][arrayName][index][fieldName] = value;
+            saveToLocalStorage();
+        }
+
+        function addOrganizationField() {
+            if (!state.applicants[state.currentApplicant].otherInfo) {
+                state.applicants[state.currentApplicant].otherInfo = {};
+            }
+            if (!state.applicants[state.currentApplicant].otherInfo.oi_organization_name) {
+                state.applicants[state.currentApplicant].otherInfo.oi_organization_name = [];
+            }
+
+            state.applicants[state.currentApplicant].otherInfo.oi_organization_name.push({
+                name: ''
+            });
+
+            const container = document.getElementById('organizations-container');
+            if (container) {
+                container.innerHTML = generateOrganizationFields(state.applicants[state.currentApplicant].otherInfo.oi_organization_name);
+            }
+
+            saveToLocalStorage();
+        }
+
+        function removeOrganizationField(index) {
+            if (state.applicants[state.currentApplicant].otherInfo &&
+                state.applicants[state.currentApplicant].otherInfo.oi_organization_name) {
+                state.applicants[state.currentApplicant].otherInfo.oi_organization_name.splice(index, 1);
+
+                const container = document.getElementById('organizations-container');
+                if (container) {
+                    container.innerHTML = generateOrganizationFields(state.applicants[state.currentApplicant].otherInfo.oi_organization_name);
+                }
+
+                saveToLocalStorage();
+            }
+        }
+
+        function generateOrganizationFields(organizations) {
+            if (!organizations || !Array.isArray(organizations)) {
+                organizations = [{
+                    name: ''
+                }];
+            }
+
+            return organizations.map((org, index) => `
+                <div class="flex items-center space-x-2 mb-2">
+                    <input type="text" 
+                        value="${org.name || ''}"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        onchange="updateOrganizationArray('otherInfo', 'oi_organization_name', ${index}, 'name', this.value)">
+                    <button type="button" 
+                            class="px-3 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                            onclick="removeOrganizationField(${index})">
+                        Remove
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        function updateMilitaryServiceArray(scope, arrayName, index, fieldName, value) {
+            if (!state.applicants[state.currentApplicant][scope]) {
+                state.applicants[state.currentApplicant][scope] = {};
+            }
+            if (!state.applicants[state.currentApplicant][scope][arrayName]) {
+                state.applicants[state.currentApplicant][scope][arrayName] = [];
+            }
+
+            if (!state.applicants[state.currentApplicant][scope][arrayName][index]) {
+                state.applicants[state.currentApplicant][scope][arrayName][index] = {};
+            }
+            state.applicants[state.currentApplicant][scope][arrayName][index][fieldName] = value;
+            saveToLocalStorage();
+        }
+
+        function addMilitaryServiceField() {
+            if (!state.applicants[state.currentApplicant].otherInfo) {
+                state.applicants[state.currentApplicant].otherInfo = {};
+            }
+            if (!state.applicants[state.currentApplicant].otherInfo.oi_military_service) {
+                state.applicants[state.currentApplicant].otherInfo.oi_military_service = [];
+            }
+
+            state.applicants[state.currentApplicant].otherInfo.oi_military_service.push({
+                oi_sm_country_name: '',
+                oi_sm_service_branch: '',
+                oi_sm_rank: '',
+                oi_militay_speciality: '',
+                oi_sm_serve_from: '',
+                oi_sm_serve_to: ''
+            });
+
+            const container = document.getElementById('military-service-container');
+            if (container) {
+                container.innerHTML = generateMilitaryServiceFields(state.applicants[state.currentApplicant].otherInfo.oi_military_service);
+            }
+
+            saveToLocalStorage();
+        }
+
+        function removeMilitaryServiceField(index) {
+            if (state.applicants[state.currentApplicant].otherInfo &&
+                state.applicants[state.currentApplicant].otherInfo.oi_military_service) {
+                state.applicants[state.currentApplicant].otherInfo.oi_military_service.splice(index, 1);
+
+                const container = document.getElementById('military-service-container');
+                if (container) {
+                    container.innerHTML = generateMilitaryServiceFields(state.applicants[state.currentApplicant].otherInfo.oi_military_service);
+                }
+
+                saveToLocalStorage();
+            }
+        }
+
+        function generateMilitaryServiceFields(serviceHistory) {
+            if (!serviceHistory || !Array.isArray(serviceHistory)) {
+                serviceHistory = [{
+                    oi_sm_country_name: '',
+                    oi_sm_service_branch: '',
+                    oi_sm_rank: '',
+                    oi_militay_speciality: '',
+                    oi_sm_serve_from: '',
+                    oi_sm_serve_to: ''
+                }];
+            }
+
+            return serviceHistory.map((service, index) => `
+                <div class="border border-gray-300 p-4 rounded-lg mb-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-gray-700 mb-2">Name of Country</label>
+                            <select class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    onchange="updateMilitaryServiceArray('otherInfo', 'oi_military_service', ${index}, 'oi_sm_country_name', this.value)">
+                                <option value="">Select Country</option>
+                                ${countries.map(country => `
+                                    <option value="${country.code}" ${service.oi_sm_country_name === country.code ? 'selected' : ''}>${country.name}</option>
+                                `).join('')}
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">Branch of Service</label>
+                            <input type="text" 
+                                value="${service.oi_sm_service_branch || ''}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                onchange="updateMilitaryServiceArray('otherInfo', 'oi_military_service', ${index}, 'oi_sm_service_branch', this.value)">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label class="block text-gray-700 mb-2">Rank or Rating</label>
+                            <input type="text" 
+                                value="${service.oi_sm_rank || ''}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                onchange="updateMilitaryServiceArray('otherInfo', 'oi_military_service', ${index}, 'oi_sm_rank', this.value)">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">Military Speciality</label>
+                            <textarea class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    rows="3"
+                                    onchange="updateMilitaryServiceArray('otherInfo', 'oi_military_service', ${index}, 'oi_militay_speciality', this.value)">${service.oi_militay_speciality || ''}</textarea>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-700 mb-2">Service Date From</label>
+                            <input type="date" 
+                                value="${service.oi_sm_serve_from || ''}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                onchange="updateMilitaryServiceArray('otherInfo', 'oi_military_service', ${index}, 'oi_sm_serve_from', this.value)">
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 mb-2">Service Date To</label>
+                            <input type="date" 
+                                value="${service.oi_sm_serve_to || ''}"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                onchange="updateMilitaryServiceArray('otherInfo', 'oi_military_service', ${index}, 'oi_sm_serve_to', this.value)">
+                        </div>
+                    </div>
+                    <button type="button" 
+                            class="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+                            onclick="removeMilitaryServiceField(${index})">
+                        Remove Service Record
+                    </button>
+                </div>
+            `).join('');
+        }
 
 
 
